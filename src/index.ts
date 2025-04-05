@@ -58,7 +58,7 @@ export class OllamaMCPClient {
 		return client;
 	}
 
-	async connectToMultipleServers(config: ConfigContainer): Promise<void> {
+	private async connectToMultipleServers(config: ConfigContainer): Promise<void> {
 		for (const [key, value] of config.entries()) {
 			const [client, tools] = await this.connectToServer(key, value);
 			const session = new Session(client, tools);
@@ -69,7 +69,7 @@ export class OllamaMCPClient {
 		this.logger.info(`Connected to server with tools: ${this.getTools().map((tool) => tool.function.name)}`);
 	}
 
-	async connectToServer(name: string, config: StdioServerParameters): Promise<[Client, Tool[]]> {
+	private async connectToServer(name: string, config: StdioServerParameters): Promise<[Client, Tool[]]> {
 		const transport = new StdioClientTransport(config);
 		const client = new Client({
 			name: 'ollama-mcp-client',
@@ -148,7 +148,7 @@ export class OllamaMCPClient {
 		yield* this.recursivePrompt(model);
 	}
 
-	async *recursivePrompt(model: string): AsyncIterable<Message> {
+	private async *recursivePrompt(model: string): AsyncIterable<Message> {
 		this.logger.debug('Prompting');
 		let stream = await this.ollama.chat({
 			model,
@@ -177,7 +177,7 @@ export class OllamaMCPClient {
 		}
 	}
 
-	async toolCall(tool_calls: ToolCall[]): Promise<string[]> {
+	private async toolCall(tool_calls: ToolCall[]): Promise<string[]> {
 		let messages: string[] = [];
 		for (const tool of tool_calls) {
 			const split = tool.function.name.split('/');
