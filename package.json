@@ -15,11 +15,11 @@
 		"watch": "tsc --watch -p ./"
 	},
 	"devDependencies": {
-		"@modelcontextprotocol/sdk": "^1.8.0",
 		"@types/node": "^22.14.0",
-		"typescript": "^5.8.2"
+		"typescript": "^5.8.3"
 	},
 	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.9.0",
 		"ollama": "^0.5.14",
 		"winston": "^3.17.0"
 	}

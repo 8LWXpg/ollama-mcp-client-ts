@@ -1,17 +1,17 @@
 {
-    "test": {
-        "command": "uv",
-        "args": [
-            "run",
-            "E:/py/ollama-mcp-client/server/server.py"
-        ]
+    "stdio": {
+        "sqlite-test": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-sqlite",
+                "--db-path",
+                "test.sqlite"
+            ]
+        }
     },
-    "sqlite-test": {
-        "command": "uvx",
-        "args": [
-            "mcp-server-sqlite",
-            "--db-path",
-            "test.sqlite"
-        ]
+    "sse": {
+        "test": {
+            "url": "http://localhost:8080"
+        }
     }
 }

@@ -1,11 +1,13 @@
 import { createLogger, format, transports, Logger } from 'winston';
 import { Ollama, Tool } from 'ollama';
-import { StdioClientTransport, StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { ConfigContainer } from './models/config_container.js';
 import { Session } from './models/session.js';
 import { Message } from './types/message.js';
 import { ToolCall } from 'ollama';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
 const SYSTEM_PROMPT = `You are a helpful assistant capable of accessing external functions and engaging in casual chat.
 Use the responses from these function calls to provide accurate and informative answers.
@@ -59,8 +61,14 @@ export class OllamaMCPClient {
 	}
 
 	private async connectToMultipleServers(config: ConfigContainer): Promise<void> {
-		for (const [key, value] of config.entries()) {
-			const [client, tools] = await this.connectToServer(key, value);
+		for (const [key, value] of config.stdio.entries()) {
+			const [client, tools] = await this.connectToServer(key, new StdioClientTransport(value));
+			const session = new Session(client, tools);
+			this.servers.set(key, session);
+			this.selected_servers.set(key, session);
+		}
+		for (const [key, value] of config.sse.entries()) {
+			const [client, tools] = await this.connectToServer(key, new SSEClientTransport(value.url, value.opts));
 			const session = new Session(client, tools);
 			this.servers.set(key, session);
 			this.selected_servers.set(key, session);
@@ -69,8 +77,7 @@ export class OllamaMCPClient {
 		this.logger.info(`Connected to server with tools: ${this.getTools().map((tool) => tool.function.name)}`);
 	}
 
-	private async connectToServer(name: string, config: StdioServerParameters): Promise<[Client, Tool[]]> {
-		const transport = new StdioClientTransport(config);
+	private async connectToServer(name: string, transport: Transport): Promise<[Client, Tool[]]> {
 		const client = new Client({
 			name: 'ollama-mcp-client',
 			version: '1.0.0',
@@ -78,24 +85,6 @@ export class OllamaMCPClient {
 		await client.connect(transport);
 
 		const response = await client.listTools();
-
-		// Helper function to transform the schema
-		const transformProperties = (prop: any): any => {
-			if (!prop) return {};
-
-			const result: any = {};
-
-			Object.entries(prop).forEach(([propName, propValue]) => {
-				let propSchema = propValue as any;
-
-				propSchema.description = propSchema.title;
-				delete propSchema.title;
-
-				result[propName] = propSchema;
-			});
-
-			return result;
-		};
 
 		const tools = response.tools.map((tool) => ({
 			type: 'function',
@@ -105,7 +94,7 @@ export class OllamaMCPClient {
 				parameters: {
 					type: tool.inputSchema.type,
 					required: tool.inputSchema.required || [],
-					properties: transformProperties(tool.inputSchema.properties),
+					properties: tool.inputSchema.properties,
 				},
 			},
 		})) as Tool[];
