@@ -27,12 +27,21 @@ export class ConfigContainer {
 			const container = new ConfigContainer(new Map(), new Map());
 
 			// Convert JSON object to Map entries
-			Object.entries(jsonData.stdio).forEach(([key, value]) => {
-				container.stdio.set(key, value as StdioServerParameters);
-			});
-			Object.entries(jsonData.sse).forEach(([key, value]) => {
-				container.sse.set(key, value as SSEServerParameters);
-			});
+			if (Object.hasOwn(jsonData, 'stdio')) {
+				Object.entries(jsonData.stdio).forEach(([key, value]) => {
+					container.stdio.set(key, value as StdioServerParameters);
+				});
+			}
+			if (Object.hasOwn(jsonData, 'sse')) {
+				Object.entries(jsonData.sse).forEach(([key, value]) => {
+					const rawSSE = value as Record<string, any>;
+					const sseParam: SSEServerParameters = {
+						url: new URL(rawSSE.url),
+						opts: rawSSE.opts,
+					};
+					container.sse.set(key, sseParam);
+				});
+			}
 
 			return container;
 		} catch (e) {

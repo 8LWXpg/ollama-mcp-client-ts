@@ -61,20 +61,24 @@ export class OllamaMCPClient {
 	}
 
 	private async connectToMultipleServers(config: ConfigContainer): Promise<void> {
-		for (const [key, value] of config.stdio.entries()) {
-			const [client, tools] = await this.connectToServer(key, new StdioClientTransport(value));
+		for (const [name, param] of config.stdio.entries()) {
+			const [client, tools] = await this.connectToServer(name, new StdioClientTransport(param));
 			const session = new Session(client, tools);
-			this.servers.set(key, session);
-			this.selected_servers.set(key, session);
+			this.servers.set(name, session);
+			this.selected_servers.set(name, session);
 		}
-		for (const [key, value] of config.sse.entries()) {
-			const [client, tools] = await this.connectToServer(key, new SSEClientTransport(value.url, value.opts));
+		for (const [name, param] of config.sse.entries()) {
+			const [client, tools] = await this.connectToServer(name, new SSEClientTransport(param.url, param.opts));
 			const session = new Session(client, tools);
-			this.servers.set(key, session);
-			this.selected_servers.set(key, session);
+			this.servers.set(name, session);
+			this.selected_servers.set(name, session);
 		}
 
-		this.logger.info(`Connected to server with tools: ${this.getTools().map((tool) => tool.function.name)}`);
+		this.logger.info(
+			`Connected to server with tools: ${this.getTools()
+				.map((tool) => tool.function.name)
+				.join(', ')}`,
+		);
 	}
 
 	private async connectToServer(name: string, transport: Transport): Promise<[Client, Tool[]]> {
