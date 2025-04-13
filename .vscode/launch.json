@@ -7,16 +7,19 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}/src/example/example.ts",
-            "preLaunchTask": "tsc: watch - tsconfig.json",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
+            "name": "Run tsx",
+            "runtimeExecutable": "tsx",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/src/example/cli.ts",
+            "args": [
+                "${workspaceFolder}/src/example/server.json"
             ],
             "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "${workspaceFolder}/node_modules/**",
+            ],
         }
     ]
 }

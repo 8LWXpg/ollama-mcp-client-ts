@@ -1,10 +1,14 @@
-// example.ts
+import { exit } from 'node:process';
+import readline from 'node:readline';
 import { OllamaMCPClient } from '../index.js';
 import { ConfigContainer } from '../models/config_container.js';
-import readline from 'node:readline';
 
 async function main() {
-	const config = ConfigContainer.fromFile('./src/example/server.json');
+	if (!process.argv[2]) {
+		console.log('Usage: ollama-mcp-client <path-to-config.json>');
+		exit(1);
+	}
+	const config = ConfigContainer.fromFile(process.argv[2]);
 	const client = await OllamaMCPClient.create(config, 'http://192.168.0.33:11434');
 
 	console.log('Client initiated');

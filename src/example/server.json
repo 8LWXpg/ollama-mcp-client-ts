@@ -1,17 +1,7 @@
 {
-    "stdio": {
-        "sqlite-test": {
-            "command": "uvx",
-            "args": [
-                "mcp-server-sqlite",
-                "--db-path",
-                "test.sqlite"
-            ]
-        }
-    },
-    "sse": {
-        "test": {
-            "url": "http://localhost:3001/sse"
-        }
-    }
+	"sse": {
+		"test": {
+			"url": "http://localhost:3001/sse"
+		}
+	}
 }
