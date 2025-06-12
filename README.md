@@ -2,53 +2,53 @@
 
 A TypeScript client for connecting Ollama to Model Context Protocol (MCP).
 
-## Overview
-
-This client allows you to use Ollama models with applications that support the Model Context Protocol. It acts as a bridge between Ollama's API and the MCP standard.
-
 ## Prerequisites
 
-- Node.js (v18+)
-- npm
+- Node.js
 - Ollama server
 
-## Installation
+## Running
 
-Clone the repository and install dependencies:
+### Edit example config
 
-```bash
-git clone https://github.com/8LWXpg/ollama-mcp-client-ts.git
-cd ollama-mcp-client
-npm install
+```json
+{
+    "sse": {
+        "server-name": {
+            "url": "http://localhost:3001/sse"
+        }
+    },
+    "stdio": {
+        "server-name": {
+            "command": "command",
+            "args": ["args"]
+        }
+    }
+}
 ```
 
-## Building
+Check [`config_container.ts`](./src/models/config_container.ts) for more detail.
 
-Build the project with:
+In short, it's basically the following type:
 
-```bash
-npm run build
+```ts
+{
+    stdio: Map<string, StdioServerParameters>
+    sse: Map<string, SSEServerParameters>
+}
 ```
 
-To watch for changes during development:
+### Edit Ollama Host Address
 
-```bash
-npm run watch
+edit host address in [`cli.ts`](./src/example/cli.ts)
+
+### Run Example CLI
+
+```shell
+npm i
+npm run cli
 ```
 
-## Debugging
+## TODO
 
-### Using VSCode
-
-1. Open the project in VSCode
-1. Press F5
-
-### Debugging Tips
-
-- Check that Ollama is running and accessible at the URL you've specified
-- Verify your MCP server configuration in the server.json file
-- Enable more verbose logging if needed in your implementation
-
-## License
-
-MIT 
+Support Streamable HTTP and deprecate SSE.
