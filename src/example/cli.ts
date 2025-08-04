@@ -11,7 +11,6 @@ async function main() {
 	const config = ConfigContainer.fromFile(process.argv[2]);
 	const client = await OllamaMCPClient.create(config, 'http://192.168.0.33:11434');
 
-	console.log('Client initiated');
 	console.log('MCP Client ready');
 	console.log(`Chat or type 'quit' to quit`);
 

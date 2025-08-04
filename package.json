@@ -1,6 +1,6 @@
 {
 	"name": "ollama-mcp-client",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "A TypeScript client for connecting Ollama to Model Context Protocol (MCP)",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -13,19 +13,17 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build": "pkgroll",
-		"dev": "pkgroll --watch",
-		"cli": "tsx src/example/cli.ts src/example/server.json"
+		"bulid": "bun run build.js",
+		"cli": "bun run src/example/cli.ts src/example/server.json"
 	},
 	"devDependencies": {
-		"@types/node": "^22.14.0",
-		"pkgroll": "^2.12.1",
-		"tsx": "^4.19.3",
-		"typescript": "^5.8.3"
+		"@ianvs/prettier-plugin-sort-imports": "^4.5.1",
+		"@types/bun": "^1.2.19",
+		"@types/node": "^22.17.0",
+		"typescript": "^5.9.2"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.9.0",
-		"ollama": "^0.5.14",
-		"winston": "^3.17.0"
+		"@modelcontextprotocol/sdk": "^1.17.1",
+		"ollama": "^0.5.16"
 	}
 }

@@ -1,13 +1,12 @@
-import { createLogger, format, transports, Logger } from 'winston';
-import { Ollama, Tool } from 'ollama';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { Ollama, Tool, ToolCall } from 'ollama';
 import { ConfigContainer } from './models/config_container.js';
 import { Session } from './models/session.js';
 import { Message } from './types/message.js';
-import { ToolCall } from 'ollama';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
 const SYSTEM_PROMPT = `You are a helpful assistant capable of accessing external functions and engaging in casual chat.
 Use the responses from these function calls to provide accurate and informative answers.
@@ -23,24 +22,20 @@ Engage in a friendly manner to enhance the chat experience.
 - Always highlight the potential of available tools to assist users comprehensively.`;
 
 export class OllamaMCPClient {
-	public logger: Logger;
+	public logger;
 	private ollama: Ollama;
 	private servers: Map<string, Session>;
 	private selected_servers: Map<string, Session>;
 	private message: Message[];
 
-	constructor(host: string) {
-		// Create colorful logger
-		this.logger = createLogger({
-			level: 'debug',
-			format: format.combine(
-				format.colorize({ all: true }),
-				format.printf(({ level, message }) => {
-					return `[${level}]: ${message}`;
-				}),
-			),
-			transports: [new transports.Console()],
-		});
+	constructor(host?: string) {
+		// Poor man's logger
+		this.logger = {
+			debug: (msg: string, ...args: any[]) => console.log('\x1b[90m[DEBUG]\x1b[0m', msg, ...args),
+			info: (msg: string, ...args: any[]) => console.log('\x1b[36m[INFO]\x1b[0m', msg, ...args),
+			warn: (msg: string, ...args: any[]) => console.log('\x1b[33m[WARN]\x1b[0m', msg, ...args),
+			error: (msg: string, ...args: any[]) => console.log('\x1b[31m[ERROR]\x1b[0m', msg, ...args),
+		};
 
 		this.ollama = new Ollama({ host: host });
 		this.servers = new Map();
@@ -54,7 +49,7 @@ export class OllamaMCPClient {
 		}
 	}
 
-	static async create(config: ConfigContainer, host: string): Promise<OllamaMCPClient> {
+	static async create(config: ConfigContainer, host?: string): Promise<OllamaMCPClient> {
 		const client = new OllamaMCPClient(host);
 		await client.connectToMultipleServers(config);
 		return client;
@@ -69,6 +64,15 @@ export class OllamaMCPClient {
 		}
 		for (const [name, param] of config.sse.entries()) {
 			const [client, tools] = await this.connectToServer(name, new SSEClientTransport(param.url, param.opts));
+			const session = new Session(client, tools);
+			this.servers.set(name, session);
+			this.selected_servers.set(name, session);
+		}
+		for (const [name, param] of config.streamable.entries()) {
+			const [client, tools] = await this.connectToServer(
+				name,
+				new StreamableHTTPClientTransport(param.url, param.opts),
+			);
 			const session = new Session(client, tools);
 			this.servers.set(name, session);
 			this.selected_servers.set(name, session);
@@ -131,7 +135,7 @@ export class OllamaMCPClient {
 		});
 	}
 
-	async *processMessage(message: string, model: string | undefined = undefined): AsyncIterable<Message> {
+	async *processMessage(message: string, model?: string): AsyncIterable<Message> {
 		model = model || 'qwen2.5:14b';
 		this.message.push({
 			role: 'user',

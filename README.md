@@ -4,24 +4,29 @@ A TypeScript client for connecting Ollama to Model Context Protocol (MCP).
 
 ## Prerequisites
 
-- Node.js
+- Bun
 - Ollama server
 
 ## Running
 
 ### Edit example config
 
-```json
+```jsonc
 {
+    "stdio": {
+        "server-name": {
+            "command": "command",
+            "args": ["args"]
+        }
+    },
     "sse": {
         "server-name": {
             "url": "http://localhost:3001/sse"
         }
     },
-    "stdio": {
+    "streamable": {
         "server-name": {
-            "command": "command",
-            "args": ["args"]
+            "url": "http://localhost:8000/mcp"
         }
     }
 }
@@ -35,6 +40,7 @@ In short, it's basically the following type:
 {
     stdio: Map<string, StdioServerParameters>
     sse: Map<string, SSEServerParameters>
+    streamable: Map<string, StreamableHTTPServerParameters>
 }
 ```
 
@@ -45,10 +51,6 @@ edit host address in [`cli.ts`](./src/example/cli.ts)
 ### Run Example CLI
 
 ```shell
-npm i
-npm run cli
+bun i
+bun run cli
 ```
-
-## TODO
-
-Support Streamable HTTP and deprecate SSE.
