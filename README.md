@@ -4,8 +4,8 @@ A TypeScript client for connecting Ollama to Model Context Protocol (MCP).
 
 ## Prerequisites
 
-- Bun
-- Ollama server
+- [Bun](https://bun.com/)
+- Ollama
 
 ## Running
 
