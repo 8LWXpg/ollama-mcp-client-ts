@@ -24,10 +24,8 @@ export class ConfigContainer {
 		this.streamable = streamable;
 	}
 
-	static fromFile(filePath: string): ConfigContainer {
+	static fromObject(jsonData: any): ConfigContainer {
 		try {
-			const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
 			// Create a new ConfigContainer
 			const container = new ConfigContainer(new Map(), new Map(), new Map());
 
@@ -62,5 +60,13 @@ export class ConfigContainer {
 		} catch (e) {
 			throw new Error(`Error reading file: ${e}`);
 		}
+	}
+
+	static fromJson(json: string): ConfigContainer {
+		return this.fromObject(JSON.parse(json));
+	}
+
+	static fromFile(filePath: string): ConfigContainer {
+		return this.fromJson(fs.readFileSync(filePath, 'utf8'));
 	}
 }
