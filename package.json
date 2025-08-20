@@ -6,7 +6,20 @@
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"exports": "./dist/index.js",
+	"exports": {
+		".": {
+			"types": "./dist.index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./types": {
+			"types": "./dist/types/index.d.ts",
+			"default": "./dist/types/index.js"
+		},
+		"./models": {
+			"types": "./dist/models/index.d.ts",
+			"default": "./dist/models/index.js"
+		}
+	},
 	"bin": "./dist/example/cli.js",
 	"files": [
 		"dist"
