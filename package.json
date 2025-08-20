@@ -1,17 +1,20 @@
 {
 	"name": "ollama-mcp-client",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "A TypeScript client for connecting Ollama to Model Context Protocol (MCP)",
+	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"exports": "./dist/index.js",
 	"bin": "./dist/example/cli.js",
+	"files": [
+		"dist"
+	],
 	"license": "MIT",
 	"author": "8LWXpg",
 	"repository": {
 		"url": "https://github.com/8LWXpg/ollama-mcp-client-ts"
 	},
-	"type": "module",
 	"scripts": {
 		"build": "tsc",
 		"watch": "tsc --watch",
