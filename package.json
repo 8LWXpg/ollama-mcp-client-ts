@@ -4,6 +4,7 @@
 	"description": "A TypeScript client for connecting Ollama to Model Context Protocol (MCP)",
 	"type": "module",
 	"main": "./dist/index.js",
+	"module": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"exports": "./dist/index.js",
 	"bin": "./dist/example/cli.js",
@@ -18,6 +19,7 @@
 	"scripts": {
 		"build": "tsc",
 		"watch": "tsc --watch",
+		"prepare": "tsc",
 		"cli": "bun src/example/cli.ts src/example/server.json"
 	},
 	"devDependencies": {
