@@ -36,7 +36,7 @@ async function main() {
 					break;
 
 				case 'clear':
-					await client.preparePrompt();
+					await client.clearPrompt();
 					continue;
 
 				default:

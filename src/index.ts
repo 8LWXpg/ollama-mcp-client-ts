@@ -128,11 +128,13 @@ export class OllamaMCPClient {
 		return this;
 	}
 
-	async preparePrompt() {
-		this.message.push({
-			role: 'system',
-			content: SYSTEM_PROMPT,
-		});
+	async clearPrompt() {
+		this.message = [
+			{
+				role: 'system',
+				content: SYSTEM_PROMPT,
+			},
+		];
 	}
 
 	async *processMessage(message: string, model?: string): AsyncIterable<Message> {
