@@ -128,7 +128,7 @@ export class OllamaMCPClient {
 		return this;
 	}
 
-	async clearPrompt() {
+	clearPrompt() {
 		this.message = [
 			{
 				role: 'system',
