@@ -25,10 +25,11 @@ export class OllamaMCPClient {
 	public logger;
 	private ollama: Ollama;
 	private servers: Map<string, Session>;
-	private selected_servers: Map<string, Session>;
+	private selectedServers: Map<string, Session>;
+	private systemPrompt: string;
 	private message: Message[];
 
-	constructor(host?: string) {
+	constructor(host?: string, systemPrompt?: string) {
 		// Poor man's logger
 		this.logger = {
 			debug: (msg: string, ...args: any[]) => console.log('\x1b[90m[DEBUG]\x1b[0m', msg, ...args),
@@ -39,7 +40,8 @@ export class OllamaMCPClient {
 
 		this.ollama = new Ollama({ host: host });
 		this.servers = new Map();
-		this.selected_servers = new Map();
+		this.selectedServers = new Map();
+		this.systemPrompt = systemPrompt ?? SYSTEM_PROMPT;
 		this.message = [];
 	}
 
@@ -49,8 +51,8 @@ export class OllamaMCPClient {
 		}
 	}
 
-	static async create(config: ConfigContainer, host?: string): Promise<OllamaMCPClient> {
-		const client = new OllamaMCPClient(host);
+	static async create(config: ConfigContainer, host?: string, systemPrompt?: string): Promise<OllamaMCPClient> {
+		const client = new OllamaMCPClient(host, systemPrompt);
 		await client.connectToMultipleServers(config);
 		return client;
 	}
@@ -60,13 +62,13 @@ export class OllamaMCPClient {
 			const [client, tools] = await this.connectToServer(name, new StdioClientTransport(param));
 			const session = new Session(client, tools);
 			this.servers.set(name, session);
-			this.selected_servers.set(name, session);
+			this.selectedServers.set(name, session);
 		}
 		for (const [name, param] of config.sse.entries()) {
 			const [client, tools] = await this.connectToServer(name, new SSEClientTransport(param.url, param.opts));
 			const session = new Session(client, tools);
 			this.servers.set(name, session);
-			this.selected_servers.set(name, session);
+			this.selectedServers.set(name, session);
 		}
 		for (const [name, param] of config.streamable.entries()) {
 			const [client, tools] = await this.connectToServer(
@@ -75,7 +77,7 @@ export class OllamaMCPClient {
 			);
 			const session = new Session(client, tools);
 			this.servers.set(name, session);
-			this.selected_servers.set(name, session);
+			this.selectedServers.set(name, session);
 		}
 
 		this.logger.info(
@@ -111,20 +113,20 @@ export class OllamaMCPClient {
 	}
 
 	getTools(): Tool[] {
-		return Array.from(this.selected_servers.values()).flatMap((server) => server.tools);
+		return Array.from(this.selectedServers.values()).flatMap((server) => server.tools);
 	}
 
 	selectServer(servers: string[]): OllamaMCPClient {
-		this.selected_servers.clear();
+		this.selectedServers.clear();
 
 		for (const serverName of servers) {
 			const server = this.servers.get(serverName);
 			if (server) {
-				this.selected_servers.set(serverName, server);
+				this.selectedServers.set(serverName, server);
 			}
 		}
 
-		this.logger.info('Selected servers', Array.from(this.selected_servers.keys()));
+		this.logger.info('Selected servers', Array.from(this.selectedServers.keys()));
 		return this;
 	}
 
@@ -132,7 +134,7 @@ export class OllamaMCPClient {
 		this.message = [
 			{
 				role: 'system',
-				content: SYSTEM_PROMPT,
+				content: this.systemPrompt,
 			},
 		];
 	}
@@ -180,7 +182,7 @@ export class OllamaMCPClient {
 		let messages: string[] = [];
 		for (const tool of tool_calls) {
 			const split = tool.function.name.split('/');
-			const session = this.selected_servers.get(split[0])?.session;
+			const session = this.selectedServers.get(split[0])?.session;
 			if (!session) {
 				this.logger.error(`Session not found for tool ${tool.function.name}`);
 				continue;
