@@ -5,38 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "bun",
-            "internalConsoleOptions": "neverOpen",
-            "request": "launch",
-            "name": "Debug",
-            "program": "src/example/cli.ts",
+            "name": "Node: Launch Program",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "program": "dist/example/cli.js",
             "args": [
                 "src/example/server.json"
             ],
-            "cwd": "${workspaceFolder}",
-            "stopOnEntry": false,
-            "watchMode": false
-        },
-        {
-            "type": "bun",
-            "internalConsoleOptions": "neverOpen",
             "request": "launch",
-            "name": "Run",
-            "program": "src/example/cli.ts",
-            "args": [
-                "src/example/server.json"
+            "skipFiles": [
+                "<node_internals>/**"
             ],
-            "cwd": "${workspaceFolder}",
-            "noDebug": true,
-            "watchMode": false
-        },
-        {
-            "type": "bun",
-            "internalConsoleOptions": "neverOpen",
-            "request": "attach",
-            "name": "Attach Bun",
-            "url": "ws://localhost:6499/",
-            "stopOnEntry": false
+            "type": "node"
         }
     ]
 }

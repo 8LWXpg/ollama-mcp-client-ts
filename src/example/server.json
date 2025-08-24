@@ -1,7 +1,12 @@
 {
-	"streamable": {
-		"test": {
-			"url": "http://localhost:8000/mcp"
+	"stdio": {
+		"sqlite-test": {
+			"command": "uvx",
+			"args": [
+				"mcp-server-sqlite@latest",
+				"--db-path",
+				"test.sqlite"
+			]
 		}
 	}
 }

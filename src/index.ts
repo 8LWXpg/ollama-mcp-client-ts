@@ -1,8 +1,10 @@
+import { it } from 'node:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { nanoid } from 'nanoid';
 import { Ollama, Tool, ToolCall } from 'ollama';
 import { ConfigContainer } from './models/config_container.js';
 import { Session } from './models/session.js';
@@ -27,9 +29,11 @@ export class OllamaMCPClient {
 	private servers: Map<string, Session>;
 	private selectedServers: Map<string, Session>;
 	private systemPrompt: string;
-	private message: Message[];
+	/** Each ID corresponds to their message thread */
+	private threads: Map<string, Message[]>;
 
-	constructor(host?: string, systemPrompt?: string) {
+	//#region class construct/destruct
+	constructor(options?: { host?: string; systemPrompt?: string }) {
 		// Poor man's logger
 		this.logger = {
 			debug: (msg: string, ...args: any[]) => console.log('\x1b[90m[DEBUG]\x1b[0m', msg, ...args),
@@ -38,11 +42,11 @@ export class OllamaMCPClient {
 			error: (msg: string, ...args: any[]) => console.log('\x1b[31m[ERROR]\x1b[0m', msg, ...args),
 		};
 
-		this.ollama = new Ollama({ host: host });
+		this.ollama = new Ollama({ host: options?.host });
 		this.servers = new Map();
 		this.selectedServers = new Map();
-		this.systemPrompt = systemPrompt ?? SYSTEM_PROMPT;
-		this.message = [];
+		this.systemPrompt = options?.systemPrompt ?? SYSTEM_PROMPT;
+		this.threads = new Map();
 	}
 
 	async cleanup(): Promise<void> {
@@ -51,12 +55,17 @@ export class OllamaMCPClient {
 		}
 	}
 
-	static async create(config: ConfigContainer, host?: string, systemPrompt?: string): Promise<OllamaMCPClient> {
-		const client = new OllamaMCPClient(host, systemPrompt);
+	static async create(
+		config: ConfigContainer,
+		options?: { host?: string; systemPrompt?: string },
+	): Promise<OllamaMCPClient> {
+		const client = new OllamaMCPClient(options);
 		await client.connectToMultipleServers(config);
 		return client;
 	}
+	//#endregion
 
+	//#region server connection
 	private async connectToMultipleServers(config: ConfigContainer): Promise<void> {
 		for (const [name, param] of config.stdio.entries()) {
 			const [client, tools] = await this.connectToServer(name, new StdioClientTransport(param));
@@ -111,6 +120,7 @@ export class OllamaMCPClient {
 
 		return [client, tools];
 	}
+	//#endregion
 
 	getTools(): Tool[] {
 		return Array.from(this.selectedServers.values()).flatMap((server) => server.tools);
@@ -130,52 +140,78 @@ export class OllamaMCPClient {
 		return this;
 	}
 
-	clearPrompt() {
-		this.message = [
-			{
-				role: 'system',
-				content: this.systemPrompt,
-			},
-		];
+	/** clears threads with id, do nothing if id does not present */
+	clearThread(id: string) {
+		if (this.threads.has(id)) {
+			this.threads.set(id, [
+				{
+					role: 'system',
+					content: this.systemPrompt,
+				},
+			]);
+		}
 	}
 
-	async *processMessage(message: string, model?: string): AsyncIterable<Message> {
+	newThread(): string {
+		const id = nanoid();
+		this.threads.set(id, [{ role: 'system', content: this.systemPrompt }]);
+		return id;
+	}
+
+	async *processMessage(id: string, message: string, model?: string): AsyncIterable<Message> {
 		model = model || 'qwen2.5:14b';
-		this.message.push({
+		let thread = this.threads.get(id);
+		if (!thread) {
+			throw new Error(`No message thread found for id: ${id}`);
+		}
+
+		thread.push({
 			role: 'user',
 			content: message,
 		});
 
-		yield* this.recursivePrompt(model);
+		yield* this.recursivePrompt(model, thread);
 	}
 
-	private async *recursivePrompt(model: string): AsyncIterable<Message> {
+	private async *recursivePrompt(model: string, thread: Message[]): AsyncIterable<Message> {
 		this.logger.debug('Prompting');
 		let stream = await this.ollama.chat({
 			model,
-			messages: this.message,
+			messages: thread,
 			tools: this.getTools(),
 			stream: true,
 		});
 
-		let tool_message_coount = 0;
+		let hasToolCall = false;
+		let hasContent = false;
+		let assistantMessage: Message;
 		for await (const part of stream) {
 			if (part.message.content) {
+				if (!hasContent) {
+					hasContent = true;
+					assistantMessage = { role: 'assistant', content: part.message.content };
+					thread.push(assistantMessage);
+				} else {
+					assistantMessage!.content += part.message.content;
+				}
 				yield { role: 'assistant', content: part.message.content };
 			} else if (part.message.tool_calls) {
+				hasToolCall = true;
+				hasContent = false;
 				this.logger.debug(`Calling tool: ${JSON.stringify(part.message.tool_calls)}`);
 				const tool_messages = await this.toolCall(part.message.tool_calls);
-				tool_message_coount++;
 				for (const tool_message of tool_messages) {
-					this.message.push({ role: 'tool', content: tool_message });
-					yield { role: 'tool', content: tool_message };
+					const message: Message = { role: 'tool', content: tool_message };
+					thread.push(message);
+					yield message;
 				}
 			}
 		}
 
-		if (tool_message_coount > 0) {
-			yield* this.recursivePrompt(model);
+		if (hasToolCall) {
+			yield* this.recursivePrompt(model, thread);
 		}
+		// this.logger.debug(`Thread:`, thread);
 	}
 
 	private async toolCall(tool_calls: ToolCall[]): Promise<string[]> {

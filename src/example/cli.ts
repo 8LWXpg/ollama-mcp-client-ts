@@ -9,7 +9,7 @@ async function main() {
 		exit(1);
 	}
 	const config = ConfigContainer.fromFile(process.argv[2]);
-	const client = await OllamaMCPClient.create(config, 'http://192.168.0.33:11434');
+	const client = await OllamaMCPClient.create(config, { host: 'http://192.168.0.33:11434' });
 
 	console.log('MCP Client ready');
 	console.log(`Chat or type 'quit' to quit`);
@@ -27,6 +27,7 @@ async function main() {
 		});
 
 	try {
+		const id = client.newThread();
 		while (true) {
 			const input = await question('Chat: ');
 
@@ -36,11 +37,11 @@ async function main() {
 					break;
 
 				case 'clear':
-					await client.clearPrompt();
+					await client.clearThread(id);
 					continue;
 
 				default:
-					for await (const message of client.processMessage(input)) {
+					for await (const message of client.processMessage(id, input)) {
 						if (message.role === 'assistant') {
 							process.stdout.write(message.content);
 						}
