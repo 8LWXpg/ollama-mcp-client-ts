@@ -8,7 +8,6 @@ import { nanoid } from 'nanoid';
 import { Ollama, Tool, ToolCall } from 'ollama';
 import { ConfigContainer } from './models/config_container.js';
 import { Session } from './models/session.js';
-import { Message } from './types/message.js';
 
 const SYSTEM_PROMPT = `You are a helpful assistant capable of accessing external functions and engaging in casual chat.
 Use the responses from these function calls to provide accurate and informative answers.
@@ -23,8 +22,20 @@ Engage in a friendly manner to enhance the chat experience.
 - Maintain an engaging, supportive, and friendly tone throughout the dialogue.
 - Always highlight the potential of available tools to assist users comprehensively.`;
 
+export type Message = {
+	role: 'user' | 'assistant' | 'system' | 'tool';
+	content: string;
+};
+
+export interface ILogger {
+	debug(message: string, ...optionalParams: any): void;
+	info(message: string, ...optionalParams: any): void;
+	warn(message: string, ...optionalParams: any): void;
+	error(message: string, ...optionalParams: any): void;
+}
+
 export class OllamaMCPClient {
-	public logger;
+	public logger: ILogger;
 	private ollama: Ollama;
 	private servers: Map<string, Session>;
 	private selectedServers: Map<string, Session>;
@@ -33,9 +44,9 @@ export class OllamaMCPClient {
 	private threads: Map<string, Message[]>;
 
 	//#region class construct/destruct
-	constructor(options?: { host?: string; systemPrompt?: string }) {
+	constructor(options?: { host?: string; systemPrompt?: string; logger?: ILogger }) {
 		// Poor man's logger
-		this.logger = {
+		this.logger = options?.logger ?? {
 			debug: (msg: string, ...args: any[]) => console.log('\x1b[90m[DEBUG]\x1b[0m', msg, ...args),
 			info: (msg: string, ...args: any[]) => console.log('\x1b[36m[INFO]\x1b[0m', msg, ...args),
 			warn: (msg: string, ...args: any[]) => console.log('\x1b[33m[WARN]\x1b[0m', msg, ...args),
