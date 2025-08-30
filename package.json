@@ -39,7 +39,6 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.17.1",
-		"nanoid": "^5.1.5",
 		"ollama": "^0.5.16"
 	}
 }

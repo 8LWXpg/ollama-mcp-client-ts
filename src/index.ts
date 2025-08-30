@@ -1,10 +1,8 @@
-import { it } from 'node:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { nanoid } from 'nanoid';
 import { Ollama, Tool, ToolCall } from 'ollama';
 import { ConfigContainer } from './models/config_container.js';
 import { Session } from './models/session.js';
@@ -164,7 +162,7 @@ export class OllamaMCPClient {
 	}
 
 	newThread(): string {
-		const id = nanoid();
+		const id = crypto.randomUUID();
 		this.threads.set(id, [{ role: 'system', content: this.systemPrompt }]);
 		return id;
 	}
