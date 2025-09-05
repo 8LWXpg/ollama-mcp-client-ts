@@ -135,7 +135,7 @@ export class OllamaMCPClient {
 		return Array.from(this.selectedServers.values()).flatMap((server) => server.tools);
 	}
 
-	selectServer(servers: string[]): OllamaMCPClient {
+	selectServer(servers: string[]): this {
 		this.selectedServers.clear();
 
 		for (const serverName of servers) {
@@ -150,7 +150,7 @@ export class OllamaMCPClient {
 	}
 
 	/** clears threads with id, do nothing if id does not present */
-	clearThread(id: string) {
+	clearThread(id: string): this {
 		if (this.threads.has(id)) {
 			this.threads.set(id, [
 				{
@@ -159,12 +159,22 @@ export class OllamaMCPClient {
 				},
 			]);
 		}
+		return this;
 	}
 
 	newThread(): string {
 		const id = crypto.randomUUID();
 		this.threads.set(id, [{ role: 'system', content: this.systemPrompt }]);
 		return id;
+	}
+
+	getThread(id: string): Message[] | undefined {
+		return this.threads.get(id);
+	}
+
+	setThread(id: string, thread: Message[]): this {
+		this.threads.set(id, thread);
+		return this;
 	}
 
 	async *processMessage(id: string, message: string, model?: string): AsyncIterable<Message> {
