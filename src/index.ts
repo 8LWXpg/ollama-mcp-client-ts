@@ -249,7 +249,7 @@ export class OllamaMCPClient {
 			try {
 				const result = await session.callTool({ name: tool_name, arguments: tool_args });
 				this.logger.debug(`Tool call result: ${JSON.stringify(result.content)}`);
-				message = `tool: ${tool.function.name}\nargs: ${tool_args}\nreturn: ${JSON.stringify(result.content)}`;
+				message = `tool: ${tool.function.name}\nargs: ${JSON.stringify(tool_args)}\nreturn: ${JSON.stringify(result.content)}`;
 			} catch (e) {
 				this.logger.error(`Error calling tool ${tool_name}: ${e}`);
 				message = `Error calling tool: ${tool_name}\nargs: ${tool_args}\n${e}`;
